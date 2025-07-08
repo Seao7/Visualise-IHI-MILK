@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mean Spectra Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>Mean Spectra Plot</h2>
+
+  <div id="checkbox-container"></div>
+  <canvas id="spectraChart" width="800" height="400"></canvas>
+
+  <script>
+    let spectraData = {};
+    let chart;
+
+    function populateCheckboxes() {
+      const container = document.getElementById("checkbox-container");
+      container.innerHTML = ""; // clear existing
+
+      for (let key in spectraData) {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = key;
+        checkbox.checked = true;
+        checkbox.onchange = updatePlot;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(" " + key));
+        container.appendChild(label);
+        container.appendChild(document.createElement("br"));
+      }
+    }
+
+    function updatePlot() {
+      const selectedKeys = [];
+      const checkboxes = document.querySelectorAll("input[type=checkbox]");
+      checkboxes.forEach((cb) => {
+        if (cb.checked) selectedKeys.push(cb.name);
+      });
+
+      const datasets = selectedKeys.map((key, i) => ({
+        label: key,
+        data: spectraData[key],
+        borderColor: `hsl(${(i * 60) % 360}, 70%, 50%)`,
+        fill: false,
+        tension: 0.1
+      }));
+
+      if (chart) chart.destroy();
+
+      const ctx = document.getElementById("spectraChart").getContext("2d");
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: spectraData[selectedKeys[0]].map((_, i) => 900 + i * ((1700 - 900) / spectraData[selectedKeys[0]].length)),
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          },
+          scales: {
+            x: { title: { display: true, text: "Band Index" } },
+            y: { title: { display: true, text: "Mean Reflectance" } }
+          }
+        }
+      });
+    }
+
+    // FETCH JSON
+    fetch("mean_spectra_data.json")
+      .then((res) => res.json())
+      .then((data) => {
+        spectraData = data;
+        populateCheckboxes();
+        updatePlot();
+      });
+  </script>
+</body>
+</html>
