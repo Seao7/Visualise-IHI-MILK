@@ -2,35 +2,375 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Mean Spectra Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spectra Viewer</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      font-weight: 300;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .controls {
+      padding: 30px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .control-section {
+      margin-bottom: 25px;
+    }
+
+    .control-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    .toggle-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .toggle-btn:hover:not(.active) {
+      background: #dee2e6;
+      transform: translateY(-1px);
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .checkbox-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 12px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+
+    .checkbox-item label {
+      font-weight: 500;
+      color: #2c3e50;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .chart-container {
+      padding: 30px;
+      background: white;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 500px;
+      background: #fafafa;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+      font-size: 1.2em;
+      color: #6c757d;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-right: 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 20px 0;
+      border: 1px solid #f5c6cb;
+    }
+
+    .bulk-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .bulk-btn {
+      padding: 8px 16px;
+      border: 1px solid #dee2e6;
+      border-radius: 20px;
+      background: white;
+      color: #495057;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+    }
+
+    .bulk-btn:hover {
+      background: #e9ecef;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2em;
+      }
+      
+      .checkbox-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .toggle-group {
+        flex-direction: column;
+      }
+      
+      .chart-wrapper {
+        height: 400px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Mean Spectra Plot</h2>
-
-  <div id="checkbox-container"></div>
-  <canvas id="spectraChart" width="800" height="400"></canvas>
+  <div class="container">
+    <div class="header">
+      <h1>Spectra Viewer</h1>
+      <p>Interactive visualization of spectral data</p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-section">
+        <div class="control-title">Data Type</div>
+        <div class="toggle-group">
+          <button class="toggle-btn active" onclick="switchDataType('mean')">Mean Spectra</button>
+          <button class="toggle-btn" onclick="switchDataType('std')">Standard Deviation</button>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <div class="control-title">Spectra Selection</div>
+        <div class="bulk-controls">
+          <button class="bulk-btn" onclick="selectAll()">Select All</button>
+          <button class="bulk-btn" onclick="deselectAll()">Deselect All</button>
+        </div>
+        <div id="checkbox-container" class="checkbox-grid"></div>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <div class="chart-wrapper">
+        <canvas id="spectraChart"></canvas>
+        <div id="loading" class="loading" style="display: none;">
+          <div class="spinner"></div>
+          Loading data...
+        </div>
+        <div id="error" class="error" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    let spectraData = {};
+    let meanSpectraData = {};
+    let stdSpectraData = {};
+    let currentDataType = 'mean';
     let chart;
+    let isLoading = false;
+
+    function showLoading() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('error').style.display = 'none';
+    }
+
+    function hideLoading() {
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      hideLoading();
+    }
+
+    function getCurrentData() {
+      return currentDataType === 'mean' ? meanSpectraData : stdSpectraData;
+    }
+
+    function switchDataType(type) {
+      currentDataType = type;
+      
+      // Update button styles
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Load data if not already loaded
+      if (type === 'std' && Object.keys(stdSpectraData).length === 0) {
+        loadStdData();
+      } else {
+        populateCheckboxes();
+        updatePlot();
+      }
+    }
+
+    function loadStdData() {
+      showLoading();
+      fetch('std_spectrum.json')
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Failed to load std_spectrum.json: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          stdSpectraData = data;
+          hideLoading();
+          populateCheckboxes();
+          updatePlot();
+        })
+        .catch(error => {
+          console.error('Error loading std data:', error);
+          showError('Failed to load standard deviation data. Please ensure std_spectrum.json exists.');
+        });
+    }
 
     function populateCheckboxes() {
       const container = document.getElementById("checkbox-container");
-      container.innerHTML = ""; // clear existing
-
-      for (let key in spectraData) {
-        const label = document.createElement("label");
+      container.innerHTML = "";
+      
+      const data = getCurrentData();
+      
+      for (let key in data) {
+        const item = document.createElement("div");
+        item.className = "checkbox-item";
+        
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
+        checkbox.id = key;
         checkbox.name = key;
         checkbox.checked = true;
         checkbox.onchange = updatePlot;
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(" " + key));
-        container.appendChild(label);
-        container.appendChild(document.createElement("br"));
+        
+        const label = document.createElement("label");
+        label.htmlFor = key;
+        label.textContent = key;
+        
+        item.appendChild(checkbox);
+        item.appendChild(label);
+        container.appendChild(item);
+        
+        // Make the whole item clickable
+        item.onclick = (e) => {
+          if (e.target.type !== 'checkbox') {
+            checkbox.checked = !checkbox.checked;
+            updatePlot();
+          }
+        };
       }
+    }
+
+    function selectAll() {
+      const checkboxes = document.querySelectorAll("input[type=checkbox]");
+      checkboxes.forEach(cb => cb.checked = true);
+      updatePlot();
+    }
+
+    function deselectAll() {
+      const checkboxes = document.querySelectorAll("input[type=checkbox]");
+      checkboxes.forEach(cb => cb.checked = false);
+      updatePlot();
     }
 
     function updatePlot() {
@@ -40,12 +380,22 @@
         if (cb.checked) selectedKeys.push(cb.name);
       });
 
+      if (selectedKeys.length === 0) {
+        if (chart) chart.destroy();
+        return;
+      }
+
+      const data = getCurrentData();
       const datasets = selectedKeys.map((key, i) => ({
         label: key,
-        data: spectraData[key],
-        borderColor: `hsl(${(i * 60) % 360}, 70%, 50%)`,
+        data: data[key],
+        borderColor: `hsl(${(i * 137.5) % 360}, 70%, 50%)`,
+        backgroundColor: `hsla(${(i * 137.5) % 360}, 70%, 50%, 0.1)`,
         fill: false,
-        tension: 0.1
+        tension: 0.1,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4
       }));
 
       if (chart) chart.destroy();
@@ -54,29 +404,90 @@
       chart = new Chart(ctx, {
         type: "line",
         data: {
-          labels: spectraData[selectedKeys[0]].map((_, i) => 900 + i * ((1700 - 900) / spectraData[selectedKeys[0]].length)),
+          labels: data[selectedKeys[0]].map((_, i) => 
+            900 + i * ((1700 - 900) / data[selectedKeys[0]].length)
+          ),
           datasets: datasets
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
-            legend: { display: true }
+            legend: { 
+              display: true,
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 20,
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderWidth: 1
+            }
           },
           scales: {
-            x: { title: { display: true, text: "Band Index" } },
-            y: { title: { display: true, text: "Mean Reflectance" } }
+            x: { 
+              title: { 
+                display: true, 
+                text: "Wavelength (nm)",
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            y: { 
+              title: { 
+                display: true, 
+                text: currentDataType === 'mean' ? "Mean Reflectance" : "Standard Deviation",
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            }
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false
           }
         }
       });
     }
 
-    // FETCH JSON
-    fetch("mean_spectra_data.json")
-      .then((res) => res.json())
+    // Load initial data
+    showLoading();
+    fetch("mean_spectrum.json")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to load mean_spectrum.json: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        spectraData = data;
+        meanSpectraData = data;
+        hideLoading();
         populateCheckboxes();
         updatePlot();
+      })
+      .catch((error) => {
+        console.error('Error loading mean data:', error);
+        showError('Failed to load mean spectra data. Please ensure mean_spectrum.json exists.');
       });
   </script>
 </body>
